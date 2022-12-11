@@ -1,14 +1,13 @@
 import parse as prs
 import pprint as pp
-import sympy
 
+from copy import deepcopy
 from functools import reduce
 from operator import mul
 
 
 def parse():
     monkeys = {}
-    tests = set()
     with open("input.txt") as f:
         for sec in f.read().strip().split("\n\n"):
             i, items, op, num, test, t, f = prs.parse(
@@ -26,11 +25,10 @@ def parse():
                 "test": {"by": test, "true": t, "false": f},
                 "inspect_count": 0,
             }
-            tests.add(test)
-    return monkeys, tests
+    return monkeys
 
 
-def monkey_throw(monkeys, tests, i):
+def monkey_throw(monkeys, mod, i, super_duper_stressed=False):
     monkey = monkeys[i]
     items = monkey["items"]
     while len(items) > 0:
@@ -39,53 +37,41 @@ def monkey_throw(monkeys, tests, i):
         worry = items.pop(0)
 
         operand = op["operand"] if op["operand"] != "old" else worry
-        # worry = eval(f"{str(worry)} {op['operator']} {operand}") // 3
+        # you should use as much eval() as possible, it's good /s
         worry = eval(f"{str(worry)} {op['operator']} {operand}")
+        if not super_duper_stressed:
+            worry //= 3
+        worry %= mod
 
         to = test["true"] if worry % test["by"] == 0 else test["false"]
-        #worry = remove_factors(tests, worry)
-        worry %= tests
         monkeys[to]["items"].append(worry)
         monkey["inspect_count"] += 1
 
 
-def remove_factors(tests, num):
-    factors = sympy.factorint(num)
-
-    prod = 1
-    for k in factors.keys():
-        if k in tests:
-            factors[k] -= 1
-        if factors[k] <= 0:
-            continue
-
-        prod *= k ** factors[k]
-
-    return num // prod
-
-
-def play_round(monkeys, tests, num):
+def play_round(monkeys, mod, num, stressed=False):
     for n in range(num):
         for i in range(len(monkeys)):
-            monkey_throw(monkeys, tests, i)        
+            monkey_throw(monkeys, mod, i, stressed)
+        if (n + 1) % (num // 5) == 0:
+            print(f"Finished round {n+1}")
+
+
+def monke_interaction(monkeys, r, stressed=False):
+    m = deepcopy(monkeys)
+    mod = reduce(mul, map(lambda i: monkeys[i]["test"]["by"], monkeys), 1)
+    play_round(m, mod, r, stressed)
+    l = list(map(lambda i: m[i]["inspect_count"], m))
+    l.sort(reverse=True)
+    return l[0] * l[1]
 
 
 def solve():
-    monkeys, tests = parse()
-    tests = reduce(mul, tests, 1)
-    print(tests)
+    monkeys = parse()
 
-    play_round(monkeys, tests, 20)
-    print(monkeys)
-    l = list(map(lambda i: monkeys[i]["inspect_count"], monkeys))
-    l.sort(reverse=True)
-    part1 = l[0] * l[1]
-
-    play_round(monkeys, tests, 9980)
-
-    l = list(map(lambda i: monkeys[i]["inspect_count"], monkeys))
-    l.sort(reverse=True)
-    part2 = l[0] * l[1]
+    print("==========COMPUTING PART 1==========")
+    part1 = monke_interaction(monkeys, 20, False)
+    print("==========COMPUTING PART 2==========")
+    part2 = monke_interaction(monkeys, 10000, True)
     return {"part 1": part1, "part 2": part2}
 
 
