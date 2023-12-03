@@ -79,19 +79,30 @@ def neighbors(coord: Coord) -> set[Coord]:
 
 
 def get_part_numbers(
-    numbers: dict[Coord, int], symbols: dict[Coord, str]
+    symbol: Coord, numbers: dict[Coord, int]
 ) -> list[tuple[int, frozenset[Coord]]]:
     part_numbers: list[tuple[int, frozenset[Coord]]] = []
-    for c in symbols:
-        for n in neighbors(c):
-            if n not in numbers:
-                continue
+    for n in neighbors(symbol):
+        if n not in numbers:
+            continue
 
-            res = get_number_on(n, numbers)
-            if res not in part_numbers:
-                part_numbers.append(res)
+        res = get_number_on(n, numbers)
+        if res not in part_numbers:
+            part_numbers.append(res)
 
     return part_numbers
+
+
+def get_all_part_numbers(
+    numbers: dict[Coord, int], symbols: dict[Coord, str]
+) -> list[tuple[int, frozenset[Coord]]]:
+    part_numbers: set[tuple[int, frozenset[Coord]]] = set()
+
+    for c in symbols:
+        pnumbers = get_part_numbers(c, numbers)
+        part_numbers.update(pnumbers)
+
+    return list(part_numbers)
 
 
 def get_gears(
@@ -99,18 +110,10 @@ def get_gears(
 ) -> set[tuple[Coord, int]]:
     gears: set[tuple[Coord, int]] = set()
     for c, s in symbols.items():
-        part_numbers: list[tuple[int, frozenset[Coord]]] = []
         if s != "*":
             continue
 
-        for n in neighbors(c):
-            if n not in numbers:
-                continue
-
-            res = get_number_on(n, numbers)
-            if res not in part_numbers:
-                part_numbers.append(res)
-
+        part_numbers = get_part_numbers(c, numbers)
         if len(part_numbers) == 2:
             gears.add((c, part_numbers[0][0] * part_numbers[1][0]))
     return gears
@@ -119,7 +122,7 @@ def get_gears(
 def main() -> None:
     numbers, symbols = parse("input.txt")
 
-    part_numbers = map(lambda t: t[0], get_part_numbers(numbers, symbols))
+    part_numbers = map(lambda t: t[0], get_all_part_numbers(numbers, symbols))
     print("Part 1:", sum(part_numbers))
 
     gears = map(lambda t: t[1], get_gears(numbers, symbols))
