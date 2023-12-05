@@ -66,13 +66,12 @@ def find_ranges(
     """
     Instead of searching every single number, which takes bazillions of iterations,
     search for ranges instead, if any range surpasses the destionation's max
-    range, then we simply take the excess and turn it into a new search, in
-    other words, a recursive search.
+    range, then we simply take the excess and turn it into a new recursive search.
 
     Otherwise, the idea of the algorithm is identical to the find() function above.
     """
     if src not in directions:
-        return []
+        raise KeyError(f"src {src} not in directions")
 
     ranges = []
     while True:
@@ -87,7 +86,7 @@ def find_ranges(
                 continue
 
             if id_max > s_max:
-                # turns the excess ranges into a new search, have no idea if it
+                # turns the excess range into a new search, have no idea if it
                 # will trigger an off-by-one error or not, it mostly likely does,
                 # but it works on my machine so yeah...
                 new_id = s_max
@@ -107,8 +106,16 @@ def find_ranges(
             return ranges
 
 
-def find_lowest_ranges(ranges: list[tuple[int, int]]) -> int:
-    return min(map(lambda r: r[0], ranges))
+def find_ranges_lowest(
+    seeds: list[int], directions: dict[str, str], maps: Map
+) -> list[int]:
+    seed_ranges = zip(seeds[0::2], seeds[1::2])
+    ranges = map(
+        lambda s: find_ranges(s[0], s[1], "seed", "location", directions, maps),
+        seed_ranges,
+    )
+    min_ranges = list(map(lambda rs: min(map(lambda r: r[0], rs)), ranges))
+    return min_ranges
 
 
 def main() -> None:
@@ -117,17 +124,8 @@ def main() -> None:
     lowest = min(map(lambda s: find(s, "seed", "location", directions, maps), seeds))
     print("Part 1:", lowest)
 
-    seed_ranges = list(zip(seeds[0::2], seeds[1::2]))
-    # yeah, about this...
-    lowest = min(
-        map(
-            lambda s: find_lowest_ranges(
-                find_ranges(s[0], s[1], "seed", "location", directions, maps)
-            ),
-            seed_ranges,
-        )
-    )
-    print("Part 2:", lowest)
+    min_ranges = find_ranges_lowest(seeds, directions, maps)
+    print("Part 2:", min(min_ranges))
 
 
 if __name__ == "__main__":
