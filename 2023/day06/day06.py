@@ -42,25 +42,19 @@ def fix_input(parsed: list[tuple[int, int]]) -> tuple[int, int]:
 
     time = int("".join(map(str, times)))
     record = int("".join(map(str, records)))
-
     return (time, record)
 
 
 def main() -> None:
     records = parse("input.txt")
 
-    print(
-        prod(
-            map(
-                lambda x: x[1] - x[0] + 1,
-                map(lambda x: find_margins(x[0], x[1]), records),
-            )
-        )
-    )
+    margins = map(lambda x: find_margins(x[0], x[1]), records)
+    # the infamous off-by-one error strikes again
+    print("Part 1:", prod(map(lambda x: x[1] - x[0] + 1, margins)))
 
-    t, d = fix_input(records)
-    x1, x2 = find_margins(t, d)
-    print(x2 - x1 + 1)
+    time, distance = fix_input(records)
+    lower, upper = find_margins(time, distance)
+    print("Part 2:", upper - lower + 1)
 
 
 if __name__ == "__main__":
