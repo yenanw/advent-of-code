@@ -22,45 +22,29 @@ def parse(filename: str) -> tuple[str, Map]:
         return (ins, map)
 
 
-def read_instructions(start: str, instructions: str, _map: Map) -> str:
-    curr = start
-    for ins in instructions:
-        match ins:
-            case "L":
-                next = _map[curr][0]
-            case "R":
-                next = _map[curr][1]
-            case _:
-                raise ValueError("instructions contains more than L/R")
-        curr = next
-    return curr
+def traverse(starts: list[str], ending: str, ins: str, _map: Map) -> int:
+    """
+    Traverses from all nodes given in `starts` until all start nodes reaches
+    a node that ends with `ending` simultaneously. Returns the steps it took
+    for that to happen.
 
+    Note 1: if `starts` contains only 1 node, and `ending` == the ending node,
+            then it is effectively the same as looking for the amount of steps
+            taken from `starts` to `ending`, given the list of instructions.
 
-def traverse_single(start: str, end: str, ins: str, _map: Map) -> int:
-    steps = 0
-
-    while True:
-        curr_end = read_instructions(start, ins, _map)
-        start = curr_end
-        steps += len(ins)
-        if curr_end == end:
-            return steps
-
-
-# def traverse_all(starts: set[str], ends: set[str], ins: str, _map: Map) -> int:
-#     steps: list[int] = []
-#     for s in starts:
-#         all_steps = map(lambda e: traverse_single(s, e, ins, _map), ends)
-#         steps.append(min(all_steps))
-#     return lcm(*steps)
-
-
-def traverse_all(starts: set[str], ending: str, ins: str, _map: Map) -> int:
+    Note 2: this does not work for general input because the solution uses LCM
+            to speed up the process, since the brute-force approach takes too
+            long time. The LCM approach requires the input to "loop", meaning
+            if s is the starting node and e1 is the ending node, then the steps
+            taken from s -> e1 needs to be same as e1 -> e2, where e2 is the
+            an ending node that fulfulls the criteria (i.e. e2 == e1 or that e2
+            ends with `ending`), and so on for all ending nodes.
+    """
     steps: list[int] = []
     counter = 0
     while len(starts) > 0:
         for i in ins:
-            new_starts = set()
+            new_starts: list[str] = []
             counter += 1
             for start in starts:
                 match i:
@@ -73,28 +57,17 @@ def traverse_all(starts: set[str], ending: str, ins: str, _map: Map) -> int:
                 if next.endswith(ending):
                     steps.append(counter)
                     continue
-                new_starts.add(next)
+                new_starts.append(next)
             starts = new_starts
     return lcm(*steps)
 
 
-def find_all_ends_with(end: str, _map: Map) -> set[str]:
-    res: set[str] = set()
-    for key in _map:
-        if key.endswith(end):
-            res.add(key)
-    return res
-
-
 def main() -> None:
     (ins, _map) = parse("input.txt")
-    print("Part 1:", traverse_single("AAA", "ZZZ", ins, _map))
+    print("Part 1:", traverse(["AAA"], "ZZZ", ins, _map))
 
-    ends_with_A = find_all_ends_with("A", _map)
-    ends_with_Z = find_all_ends_with("Z", _map)
-    print(ends_with_A)
-    print(ends_with_Z)
-    print("Part 2:", traverse_all(ends_with_A, "Z", ins, _map))
+    ends_with_A = list(filter(lambda n: n.endswith("A"), _map.keys()))
+    print("Part 2:", traverse(ends_with_A, "Z", ins, _map))
 
 
 if __name__ == "__main__":
