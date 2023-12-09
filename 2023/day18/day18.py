@@ -1,9 +1,15 @@
 def parse(filename: str) -> None:
-    pass
+    with open(filename) as f:
+        pass
+    return None
 
 
 def main() -> None:
-    parse("input.txt")
+    # ==========================#
+    print("Part 1:", None)
+
+    # ==========================#
+    print("Part 2:", None)
 
 
 if __name__ == "__main__":
